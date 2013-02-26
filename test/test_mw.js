@@ -19,6 +19,11 @@ test('testRemoveLineBreaks', function() {
   equal(MW.Util.removeLineBreaks('text\n\ntext'), 'texttext');
 });
 
+test('testIsArray', function() {
+  ok(MW.Util.isArray([]));
+  ok(!MW.Util.isArray(666));
+});
+
 module('MW.Template');
 
 test('testIsValidPlaceholder', function() {

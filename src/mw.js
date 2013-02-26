@@ -49,6 +49,9 @@ MW.Util = {
     return string.replace(/(\r|\n)/g, '');
   }
 };
+MW.Util.isArray = Array.isArray || function(obj) {
+  return Object.prototype.toString.call(obj) === '[object Array]';
+};
 
 /**
  * @class Convenience class to merge placeholders into a template string.
