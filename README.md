@@ -1,4 +1,4 @@
 mw-lib.js
 =========
 
-Simple mindworks javascript base library
+Simple mindworks javascript base library 
