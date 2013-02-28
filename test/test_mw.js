@@ -285,9 +285,15 @@ test('testLoggerSetLogLevel', function() {
 module('MW.Logger.Console');
 
 test('testLog', function() {
-    var oldConsoleLog = console.log;
+    var oldConsoleLog;
+    if (window.console) {
+      oldConsoleLog = window.console.log;
+    }
+    else {
+      window.console = {};
+    }
     var entries = [];
-    console.log = function(msg) {
+    window.console.log = function(msg) {
         entries.push(msg);
     }
 
@@ -295,7 +301,7 @@ test('testLog', function() {
   logger.log('aMessage', MW.Logger.Levels.WARNING);
   equal(entries[0], "MW.Logger.Console: WARNING: aMessage");
 
-  console.log = oldConsoleLog;
+  window.console.log = oldConsoleLog;
 });
 
 module('MW.Logger.Composite');
