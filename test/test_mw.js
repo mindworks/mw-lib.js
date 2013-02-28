@@ -172,7 +172,29 @@ test('testEventDispatcherRegisteringHandlerExecutionTime', function() {
   dispatcher.clear('anEventName');
 });
 
-module('MW.Logging');
+module('MW.Logger');
+
+test('testGetStringForLogLevel', function() {
+  equal(MW.Logger.getStringForLogLevel(10), 'DEBUG', 'Translation works.');
+  equal(MW.Logger.getStringForLogLevel(50), 'ERROR', 'Double checking: Translation works.');
+  equal(MW.Logger.getStringForLogLevel(666), false, 'Expected behaviour for invalid log level.');
+  equal(MW.Logger.getStringForLogLevel(), false, 'Expected behaviour for missing log level.');
+});
+
+test('testGetLogLevelForString', function() {
+  equal(MW.Logger.getLogLevelForString('NOLOG'), MW.Logger.Levels.NOLOG);
+  equal(MW.Logger.getLogLevelForString('DEBUG'), MW.Logger.Levels.DEBUG);
+  equal(MW.Logger.getLogLevelForString('info'), MW.Logger.Levels.INFO);
+  equal(MW.Logger.getLogLevelForString('noticE'), MW.Logger.Levels.NOTICE);
+  equal(MW.Logger.getLogLevelForString('WARNing'), MW.Logger.Levels.WARNING);
+  equal(MW.Logger.getLogLevelForString('eRROR'), MW.Logger.Levels.ERROR);
+  equal(MW.Logger.getLogLevelForString('critical'), MW.Logger.Levels.CRITICAL);
+  equal(MW.Logger.getLogLevelForString('Alert'), MW.Logger.Levels.ALERT);
+  equal(MW.Logger.getLogLevelForString('EMERGENCY'), MW.Logger.Levels.EMERGENCY);
+  equal(MW.Logger.getLogLevelForString('INVALID_LEVEL'), MW.Logger.Levels.NOLOG);
+});
+
+module('MW.LogEntry');
 
 test('testLogEntryDefaultLevel', function() {
   var entry = new MW.LogEntry('aMessage');
@@ -189,52 +211,54 @@ test('testLogEntryInvalidLevel', function() {
   equal(entry.toString(), 'INFO: anErrorMessage');
 });
 
-test('testLoggerDefaultLogLevel', function() {
-  var logger = new MW.Logger();
-  equal(logger.getLogLevel(), MW.Logger.Levels.WARNING);
-});
-
-test('testLoggerCustomLogLevel', function() {
-  var logger = new MW.Logger(MW.Logger.Levels.DEBUG);
-  equal(logger.getLogLevel(), MW.Logger.Levels.DEBUG);
-});
-
-test('testLoggerInvalidLogLevel', function() {
-  var logger = new MW.Logger('InvalidLogLevel');
-  equal(logger.getLogLevel(), MW.Logger.Levels.WARNING);
-});
-
-test('testLoggerLogWithHigherLogLevel', function() {
-  var logger = new MW.Logger(MW.Logger.Levels.INFO);
-  logger.log('aMessage', MW.Logger.Levels.WARNING);
-  equal(logger.toString(), "WARNING: aMessage\n");
-});
-
-test('testLoggerLogWithEqualLogLevel', function() {
-  var logger = new MW.Logger(MW.Logger.Levels.INFO);
-  logger.log('aMessage', MW.Logger.Levels.INFO);
-  equal(logger.toString(), "INFO: aMessage\n");
-});
-
-test('testLoggerLogWithLowerLogLevel', function() {
-  var logger = new MW.Logger(MW.Logger.Levels.INFO);
-  logger.log('aMessage', MW.Logger.Levels.DEBUG);
-  equal(logger.toString(), '');
-});
-
-test('testLoggerLogWithInvalidLogLevel', function() {
-  var logger = new MW.Logger();
-  logger.log('aMessage', 180);
-  equal(logger.toString(), '');
-});
-
 test('testLoggerLogMessageWithLineBreaks', function() {
   var entry = new MW.LogEntry('aMessage \n next line');
   equal(entry.toString(), 'INFO: aMessage  next line');
 });
 
+module('MW.Logger.Array');
+
+test('testLoggerDefaultLogLevel', function() {
+  var logger = new MW.Logger.Array();
+  equal(logger.getLogLevel(), MW.Logger.Levels.WARNING);
+});
+
+test('testLoggerCustomLogLevel', function() {
+  var logger = new MW.Logger.Array(MW.Logger.Levels.DEBUG);
+  equal(logger.getLogLevel(), MW.Logger.Levels.DEBUG);
+});
+
+test('testLoggerInvalidLogLevel', function() {
+  var logger = new MW.Logger.Array('InvalidLogLevel');
+  equal(logger.getLogLevel(), MW.Logger.Levels.WARNING);
+});
+
+test('testLoggerLogWithHigherLogLevel', function() {
+  var logger = new MW.Logger.Array(MW.Logger.Levels.INFO);
+  logger.log('aMessage', MW.Logger.Levels.WARNING);
+  equal(logger.toString(), "WARNING: aMessage\n");
+});
+
+test('testLoggerLogWithEqualLogLevel', function() {
+  var logger = new MW.Logger.Array(MW.Logger.Levels.INFO);
+  logger.log('aMessage', MW.Logger.Levels.INFO);
+  equal(logger.toString(), "INFO: aMessage\n");
+});
+
+test('testLoggerLogWithLowerLogLevel', function() {
+  var logger = new MW.Logger.Array(MW.Logger.Levels.INFO);
+  logger.log('aMessage', MW.Logger.Levels.DEBUG);
+  equal(logger.toString(), '');
+});
+
+test('testLoggerLogWithInvalidLogLevel', function() {
+  var logger = new MW.Logger.Array();
+  logger.log('aMessage', 180);
+  equal(logger.toString(), '');
+});
+
 test('testLoggerGetLog', function() {
-  var logger = new MW.Logger(MW.Logger.Levels.INFO);
+  var logger = new MW.Logger.Array(MW.Logger.Levels.INFO);
   logger.log('anInfo', MW.Logger.Levels.INFO);
   logger.log('aDebugMessage', MW.Logger.Levels.DEBUG);
   logger.log('aWarning', MW.Logger.Levels.WARNING);
@@ -248,7 +272,7 @@ test('testLoggerGetLog', function() {
 });
 
 test('testLoggerSetLogLevel', function() {
-  var logger = new MW.Logger();
+  var logger = new MW.Logger.Array();
   equal(logger.getLogLevel(), MW.Logger.Levels.WARNING);
 
   logger.setLogLevel(MW.Logger.Levels.INFO);
@@ -258,17 +282,54 @@ test('testLoggerSetLogLevel', function() {
   equal(logger.getLogLevel(), MW.Logger.Levels.INFO);
 });
 
-test('testGetLogLevelForString', function() {
-  equal(MW.Logger.getLogLevelForString('NOLOG'), MW.Logger.Levels.NOLOG);
-  equal(MW.Logger.getLogLevelForString('DEBUG'), MW.Logger.Levels.DEBUG);
-  equal(MW.Logger.getLogLevelForString('info'), MW.Logger.Levels.INFO);
-  equal(MW.Logger.getLogLevelForString('noticE'), MW.Logger.Levels.NOTICE);
-  equal(MW.Logger.getLogLevelForString('WARNing'), MW.Logger.Levels.WARNING);
-  equal(MW.Logger.getLogLevelForString('eRROR'), MW.Logger.Levels.ERROR);
-  equal(MW.Logger.getLogLevelForString('critical'), MW.Logger.Levels.CRITICAL);
-  equal(MW.Logger.getLogLevelForString('Alert'), MW.Logger.Levels.ALERT);
-  equal(MW.Logger.getLogLevelForString('EMERGENCY'), MW.Logger.Levels.EMERGENCY);
-  equal(MW.Logger.getLogLevelForString('INVALID_LEVEL'), MW.Logger.Levels.NOLOG);
+module('MW.Logger.Console');
+
+test('testLog', function() {
+    var oldConsoleLog = console.log;
+    var entries = [];
+    console.log = function(msg) {
+        entries.push(msg);
+    }
+
+  var logger = new MW.Logger.Console(MW.Logger.Levels.INFO);
+  logger.log('aMessage', MW.Logger.Levels.WARNING);
+  equal(entries[0], "MW.Logger.Console: WARNING: aMessage");
+
+  console.log = oldConsoleLog;
+});
+
+module('MW.Logger.Composite');
+
+test('testLog', function() {
+  var mockLogger = {
+    entries : [],
+    log : function(message, level) {
+      this.entries.push(level + ': ' + message);
+    }
+  };
+  var mockLogger2 = {
+    entries : [],
+    log : function(message, level) {
+      this.entries.push(level + ': ' + message);
+    }
+  };
+
+  var logger = new MW.Logger.Composite();
+
+  logger.log('test');
+  ok(true, 'Empty composite logger does nothing');
+
+  logger.addLogger(mockLogger);
+  logger.log('test', 'A_LEVEL');
+
+  equal(mockLogger.entries[0], 'A_LEVEL: test');
+
+  mockLogger.entries = [];
+  logger.addLogger(mockLogger2);
+  logger.log('another_test', 'A_LEVEL');
+
+  equal(mockLogger.entries[0], 'A_LEVEL: another_test');
+  equal(mockLogger2.entries[0], 'A_LEVEL: another_test');
 });
 
 module('MW.Window');

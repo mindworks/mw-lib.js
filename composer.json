@@ -1,0 +1,17 @@
+{
+  "name": "mindworks/mw-lib.js",
+  "type": "library",
+  "description": "Simple mindworks javascript base library",
+  "keywords": [],
+  "homepage": "http://www.mindworks.de",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Jörg Basedow",
+      "email": "jbasedow@mindworks.de"
+    }
+  ],
+  "require": {
+  },
+  "minimum-stability": "dev"
+}

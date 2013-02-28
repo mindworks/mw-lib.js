@@ -213,101 +213,10 @@ MW.EventDispatcher.ExecutionTimes = {
 };
 
 /**
- * @class Service for logging messages with log levels. Only entries are logged
- *        that have a log level higher or equal than the log level configured in
- *        the logger.
+ * @class Name space for loggers.
  * @author Joerg Basedow <jbasedow@mindworks.de>
- * @constructor
- * @param {Integer} logLevel
  */
-MW.Logger = function(logLevel) {
-  this._logEntries = [];
-  this._logLevel = MW.Logger.Levels.WARNING;
-
-  this.setLogLevel(logLevel);
-};
-MW.Logger.prototype = {
-
-  /**
-   * Creates log entry.
-   *
-   * @param {String} message
-   * @param {Integer} level
-   */
-  log : function(message, level) {
-    if (this._logLevel != MW.Logger.Levels.NOLOG && MW.Logger.isValidLevel(level) && level >= this._logLevel) {
-      this._logEntries.push(new MW.LogEntry(message, level));
-    }
-  },
-
-  /**
-   * Set current log level.
-   *
-   * @param {Integer} level One of MW.Logger.Levels
-   */
-  setLogLevel : function(level) {
-    if (MW.Logger.isValidLevel(level)) {
-      this._logLevel = level;
-    }
-  },
-
-  /**
-   * Get current log level.
-   *
-   * @return {Integer} One of MW.Logger.Levels
-   */
-  getLogLevel : function() {
-    return this._logLevel;
-  },
-
-  /**
-   * Get current log level name.
-   *
-   * @return {String} Name of the current log level.
-   */
-  getLogLevelAsString : function() {
-    return MW.Logger.getStringForLogLevel(this.getLogLevel());
-  },
-
-  /**
-   * Get log as String.
-   *
-   * @return {String}
-   */
-  toString : function() {
-    return this._stringify(this.getLogEntries());
-  },
-
-  /**
-   * Get log entries which log level is at least as high as the configured log
-   * level as Array.
-   *
-   * @return {Array.<String>} Array of log strings (Level: message).
-   */
-  getLogEntries : function() {
-    var log = [];
-    for (var anIndex = 0; anIndex < this._logEntries.length; anIndex++) {
-      var anEntry = this._logEntries[anIndex];
-      log.push(anEntry.toString());
-    }
-    return log;
-  },
-
-  /**
-   * Convert array of log entries to single new line separated string.
-   *
-   * @private
-   * @param {Array.<MW.LogEntry>} entries
-   * @return {String}
-   */
-  _stringify : function(entries) {
-    var logString = '';
-    for (var i = 0; i < entries.length; i++) {
-      logString += entries[i].toString() + "\n";
-    }
-    return logString;
-  }
-};
+MW.Logger = {}
 
 /**
  * Log levels
@@ -334,7 +243,7 @@ MW.Logger.Levels = {
  * @return {Boolean}
  */
 MW.Logger.isValidLevel = function(level) {
-  return MW.Util.getKeyForElementFromObject(MW.Logger.Levels, level);
+  return Boolean(MW.Util.getKeyForElementFromObject(MW.Logger.Levels, level));
 };
 
 /**
@@ -363,14 +272,181 @@ MW.Logger.getLogLevelForString = function(levelAsString) {
  *
  */
 MW.Logger.getStringForLogLevel = function(level) {
-  var levels = MW.Logger.Levels;
-  var levelAsString = '';
-  for (var aLevelName in levels) {
-    if (level == levels[aLevelName]) {
-      levelAsString = aLevelName;
-    }
+  return MW.Util.getKeyForElementFromObject(MW.Logger.Levels, level);
+};
+
+/**
+ * @class Abstract logging service class supporting messages with log levels.
+ *        Only entries should be logged that have a .
+ * @author Joerg Basedow <jbasedow@mindworks.de>
+ * @constructor
+ * @param {Integer} logLevel
+ */
+MW.Logger.Abstract = function(logLevel) {
+  this._logLevel = MW.Logger.Levels.WARNING;
+
+  this.setLogLevel(logLevel);
+};
+/**
+ * Set current log level.
+ *
+ * @param {Integer} level One of MW.Logger.Levels
+ */
+MW.Logger.Abstract.prototype.setLogLevel = function(level) {
+  if (MW.Logger.isValidLevel(level)) {
+    this._logLevel = level;
   }
-  return levelAsString;
+};
+/**
+ * Get current log level.
+ *
+ * @return {Integer} One of MW.Logger.Levels
+ */
+MW.Logger.Abstract.prototype.getLogLevel = function() {
+  return this._logLevel;
+};
+/**
+ * Get current log level name.
+ *
+ * @return {String} Name of the current log level.
+ */
+MW.Logger.Abstract.prototype.getLogLevelAsString = function() {
+  return MW.Logger.getStringForLogLevel(this.getLogLevel());
+};
+/**
+ * Check if the given level will result in a log entry.
+ *
+ * @return {Boolean}
+ */
+MW.Logger.Abstract.prototype.isCausingLogEntry = function(level) {
+  return this._logLevel != MW.Logger.Levels.NOLOG &&
+    MW.Logger.isValidLevel(level) &&
+    level >= this._logLevel;
+};
+/**
+ * Logs given message, if given level is higher or equal than the log level
+ * configured in the logger.
+ *
+ * @param {String} message
+ * @param {Integer} level
+ */
+MW.Logger.Abstract.prototype.log = function(message, level) {};
+
+/**
+ * @class Logging service implementation that stores log entries in a member array.
+ * @author Joerg Basedow <jbasedow@mindworks.de>
+ * @constructor
+ * @param {Integer} logLevel
+ */
+MW.Logger.Array = function(logLevel) {
+  MW.Logger.Abstract.call(this, logLevel);
+  this._logEntries = [];
+};
+MW.Logger.Array.prototype = new MW.Logger.Abstract();
+/**
+ * Creates log entry.
+ *
+ * @param {String} message
+ * @param {Integer} level
+ */
+MW.Logger.Array.prototype.log = function(message, level) {
+  if (this.isCausingLogEntry(level)) {
+    this._logEntries.push(new MW.LogEntry(message, level));
+  }
+};
+/**
+ * Get log as String.
+ *
+ * @return {String}
+ */
+MW.Logger.Array.prototype.toString = function() {
+  return this._stringify(this.getLogEntries());
+};
+/**
+ * Get log entries which log level is at least as high as the configured log
+ * level as Array.
+ *
+ * @return {Array.<String>} Array of log strings (Level: message).
+ */
+MW.Logger.Array.prototype.getLogEntries = function() {
+  var log = [];
+  for (var anIndex = 0; anIndex < this._logEntries.length; anIndex++) {
+    var anEntry = this._logEntries[anIndex];
+    log.push(anEntry.toString());
+  }
+  return log;
+};
+/**
+ * Convert array of log entries to single new line separated string.
+ *
+ * @private
+ * @param {Array.<MW.LogEntry>} entries
+ * @return {String}
+ */
+MW.Logger.Array.prototype._stringify = function(entries) {
+  var logString = '';
+  for (var i = 0; i < entries.length; i++) {
+    logString += entries[i].toString() + "\n";
+  }
+  return logString;
+};
+
+/**
+ * @class Logging service implementation that stores log entries in a member array.
+ * @author Joerg Basedow <jbasedow@mindworks.de>
+ * @constructor
+ * @param {Integer} logLevel
+ */
+MW.Logger.Console = function(logLevel) {
+  MW.Logger.Abstract.call(this, logLevel);
+};
+MW.Logger.Console.prototype = new MW.Logger.Abstract();
+/**
+ * Logs Entry to console if applicable.
+ *
+ * @param {String} message
+ * @param {Integer} level
+ */
+MW.Logger.Console.prototype.log = function(message, level) {
+  if (!MW.Logger.isValidLevel(level)) {
+    level = MW.Logger.Levels.INFO;
+  }
+  if (this.isCausingLogEntry(level) && window.console && typeof window.console.log == 'function') {
+    window.console.log('MW.Logger.Console: ' + MW.Logger.getStringForLogLevel(level) + ': ' + message);
+  }
+};
+
+/**
+ * @class Composite logging service aggregating multiple loggers.
+ * @author Joerg Basedow <jbasedow@mindworks.de>
+ * @constructor
+ * @param {Integer} logLevel
+ */
+MW.Logger.Composite = function(logLevel) {
+  MW.Logger.Abstract.call(this, logLevel);
+  this._loggers = [];
+};
+MW.Logger.Composite.prototype = new MW.Logger.Abstract();
+/**
+ * Add a logging service.
+ *
+ * @param {MW.Logger.Abstract} logger
+ */
+MW.Logger.Composite.prototype.addLogger = function(logger) {
+  if (typeof logger.log == 'function') {
+    this._loggers.push(logger);
+  }
+};
+/**
+ * Propagates log call to added loggers.
+ *
+ * @param {String} message
+ * @param {Integer} level
+ */
+MW.Logger.Composite.prototype.log = function(message, level) {
+  for (var i = 0; i < this._loggers.length; i++) {
+    this._loggers[i].log(message, level);
+  }
 };
 
 /**
@@ -396,8 +472,7 @@ MW.LogEntry.prototype = {
    * @return {String}
    */
   toString : function() {
-    var levelAsString = MW.Util.getKeyForElementFromObject(MW.Logger.Levels, this._level);
-    return levelAsString + ': ' + this._message;
+    return MW.Logger.getStringForLogLevel(this._level) + ': ' + this._message;
   },
 
   /**
