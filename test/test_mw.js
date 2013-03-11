@@ -1,8 +1,8 @@
 module('MW.Util');
 
 test('testGenerateRandomNumberString', function() {
-  ok(MW.Util.generateRandomNumberString().match('^\\d{13}$'), 'Random number with default length generated.');
-  ok(MW.Util.generateRandomNumberString(6).match('^\\d{6}$'), 'Random number with custom length generated.');
+  ok(MW.Util.generateRandomNumberString().match('^\\d{9}$'), 'Random number with default length generated.');
+  ok(MW.Util.generateRandomNumberString(13).match('^\\d{13}$'), 'Random number with custom length generated.');
 });
 
 test('testGetKeyForElementFromObject', function() {

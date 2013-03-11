@@ -11,13 +11,13 @@ var MW = {};
 MW.Util = {
   /**
    * Generate a random string of length "length" containing only numbers. If no
-   * "length" given, default length of 13 is assumed.
+   * "length" given, default length of 9 is assumed.
    *
    * @param {Integer} length
    * @return {String}
    */
   generateRandomNumberString : function(length) {
-    length = length || 13;
+    length = length || 9;
     return String(Math.random()).substring(2, 2 + length);
   },
   /**
