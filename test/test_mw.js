@@ -19,6 +19,39 @@ test('testRemoveLineBreaks', function() {
   equal(MW.Util.removeLineBreaks('text\n\ntext'), 'texttext');
 });
 
+test('testMergeRecursive', function() {
+  deepEqual(
+    MW.Util.mergeRecursive({}, { a_key : 'a_value' }),
+    { a_key : 'a_value' },
+    'Flat merging to an empty works.'
+  );
+  deepEqual(
+    MW.Util.mergeRecursive({ key1 : 'value1' }, { key2 : 'value2' }),
+    { key1 : 'value1', key2 : 'value2' },
+    'Flat merging works.'
+  );
+  deepEqual(
+    MW.Util.mergeRecursive({ key1 : 'value1' }, { key1 : 'value2' }),
+    { key1 : 'value2' },
+    'Overwriting when flat merging works.'
+  );
+  deepEqual(
+    MW.Util.mergeRecursive({}, { an_object : { a_key : 'a_value' } }),
+    {an_object : { a_key : 'a_value' } },
+    'Recursive merging to an empty works.'
+  );
+  deepEqual(
+    MW.Util.mergeRecursive({ an_object : { key1 : 'value1' } }, { an_object : { key2 : 'value2' } }),
+    {an_object : { key1 : 'value1', key2 : 'value2' } },
+    'Recursive merging works.'
+  );
+  deepEqual(
+    MW.Util.mergeRecursive({ an_object : { key1 : 'value1' } }, { an_object : { key1 : 'value2' } }),
+    {an_object : { key1 : 'value2' } },
+    'Overwriting when recursive merging works.'
+  );
+});
+
 test('testIsArray', function() {
   ok(MW.Util.isArray([]));
   ok(!MW.Util.isArray(666));

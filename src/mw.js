@@ -47,6 +47,25 @@ MW.Util = {
    */
   removeLineBreaks : function(string) {
     return string.replace(/(\r|\n)/g, '');
+  },
+
+  /**
+   * Recursively merge properties of two objects
+   */
+  mergeRecursive : function(obj1, obj2) {
+    for (var p in obj2) {
+      // Property in destination object set; update its value.
+      if (obj2[p].constructor == Object) {
+        if (!obj1[p]) {
+          obj1[p] = {};
+        }
+        obj1[p] = this.mergeRecursive(obj1[p], obj2[p]);
+      } else {
+        obj1[p] = obj2[p];
+      }
+    }
+
+    return obj1;
   }
 };
 MW.Util.isArray = Array.isArray || function(obj) {
