@@ -6,10 +6,10 @@ test('testGenerateRandomNumberString', function() {
 });
 
 test('testGetKeyForElementFromObject', function() {
-  equal(MW.Util.getKeyForElementFromObject({ aKey : 'anElement'}, 'anElement'), 'aKey');
-  equal(MW.Util.getKeyForElementFromObject({ aKey : 'anElement'}, 'nonExistingElement'), false);
+  equal(MW.Util.getKeyForElementFromObject({ aKey : 'anElement' }, 'anElement'), 'aKey');
+  equal(MW.Util.getKeyForElementFromObject({ aKey : 'anElement' }, 'nonExistingElement'), false);
   equal(MW.Util.getKeyForElementFromObject({}, 'void'), false);
-  equal(MW.Util.getKeyForElementFromObject({ aKey : 'anElement', anotherKey : 'anElement'}, 'anElement'), 'aKey');
+  equal(MW.Util.getKeyForElementFromObject({ aKey : 'anElement', anotherKey : 'anElement' }, 'anElement'), 'aKey');
 });
 
 test('testRemoveLineBreaks', function() {
@@ -55,6 +55,12 @@ test('testMergeRecursive', function() {
 test('testIsArray', function() {
   ok(MW.Util.isArray([]));
   ok(!MW.Util.isArray(666));
+});
+
+test('testGetKeysFromObject', function() {
+  deepEqual(MW.Util.getKeysFromObject({}), []);
+  deepEqual(MW.Util.getKeysFromObject({ aKey : 'anElement' }), ['aKey']);
+  deepEqual(MW.Util.getKeysFromObject({ aKey : 'anElement', anotherKey : 'anElement' }), ['aKey', 'anotherKey']);
 });
 
 module('MW.Template');

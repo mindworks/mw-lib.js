@@ -20,6 +20,7 @@ MW.Util = {
     length = length || 9;
     return String(Math.random()).substring(2, 2 + length);
   },
+
   /**
    * Gets the first key for an element from an object if contained, false
    * otherwise.
@@ -68,9 +69,31 @@ MW.Util = {
     return obj1;
   }
 };
+/**
+ * Checks if given argument is an array. Aliases native method if available.
+ *
+ * @param {Object.<String, mixed>} anObject
+ * @return {Array}
+ */
 MW.Util.isArray = Array.isArray || function(obj) {
   return Object.prototype.toString.call(obj) === '[object Array]';
 };
+/**
+ * Gets all keys from an object. Aliases native method if available.
+ *
+ * @param {Object.<String, mixed>} anObject
+ * @return {Array}
+ */
+MW.Util.getKeysFromObject = Object.keys || function(anObject) {
+  var keys = [];
+  for (var aKey in anObject) {
+    if (anObject.hasOwnProperty(aKey)) {
+      keys.push(aKey);
+    }
+  }
+  return keys;
+};
+
 
 /**
  * @class Convenience class to merge placeholders into a template string.
