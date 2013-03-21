@@ -459,6 +459,23 @@ test('testCookie', function() {
   equal(mockWindow.document.cookie, aCookieName + '=; expires= Thu, 01-Jan-1970 00:00:01 GMT;', 'Browser cookie was deleted.');
 });
 
+test('testDocumentWrite', function() {
+  var relayedContent;
+  var mockWindow = {
+    document : {
+      write : function(content) {
+        relayedContent = content;
+      }
+    }
+  };
+  var windowWrapper = new MW.Window(mockWindow);
+
+  var content = 'moo';
+  windowWrapper.documentWrite(content)
+
+  equal(relayedContent, content);
+});
+
 test('test$', function() {
   var mockWindow = {
     document : {
@@ -478,4 +495,77 @@ test('test$', function() {
   deepEqual(windowWrapper.$('.aClass'), ['aClass'], 'Class selector propery translated.');
   deepEqual(windowWrapper.$('aTag'), ['aTag'], 'Tag selector propery translated.');
   deepEqual(windowWrapper.$(666), [], 'Non string selector results in an empty array.');
+});
+
+test('testOnDomReadyDefault', function() {
+  var mockWindow = {
+    navigator : {},
+    document : {
+      write : function(content) {},
+      getElementById : function(id) {
+        return {};
+      }
+    }
+  };
+  var windowWrapper = new MW.Window(mockWindow);
+
+  var callback = function() {};
+  windowWrapper.onDomReady(callback);
+
+  equal(typeof mockWindow.onload, 'function');
+});
+
+test('testOnDomReadyFirefox', function() {
+  var mockWindow = {
+    log : [],
+    document : {
+        write : function(content) {},
+        getElementById : function(id) {
+          return {};
+        },
+        addEventListener : function(event, callback, phase) {
+            mockWindow.log.push(event + ':' + typeof callback + ':' + phase)
+        }
+    }
+  };
+  var windowWrapper = new MW.Window(mockWindow);
+
+  var callback = function() {};
+  windowWrapper.onDomReady(callback);
+
+  equal(mockWindow.log[0], 'DOMContentLoaded:function:false');
+});
+
+test('testOnDomReadySafari', function() {
+  var innerCallback;
+  var clearIntervalCalled = false;
+  var mockWindow = {
+    navigator : {
+      userAgent : 'WebKit'
+    },
+    document : {
+      readyState : 'complete',
+      write : function(content) {},
+      getElementById : function(id) {
+        return {};
+      }
+    },
+    setInterval : function(callback, time) {
+      innerCallback = callback;
+    },
+    clearInterval : function() {
+      clearIntervalCalled = true;
+    }
+  };
+  var windowWrapper = new MW.Window(mockWindow);
+
+  var domReadyHandlerCalled = false;
+  var domReadyHandler = function() {
+    domReadyHandlerCalled = true;
+  };
+  windowWrapper.onDomReady(domReadyHandler);
+
+  innerCallback.call(windowWrapper);
+  ok(domReadyHandlerCalled);
+  ok(clearIntervalCalled);
 });

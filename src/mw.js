@@ -536,7 +536,8 @@ MW.LogEntry.prototype = {
 MW.Window = function(window) {
   window = window || {};
   this.setLocation(window.location);
-  this.setDocument(window.document);
+  this._document = window.document || {};
+  this._window = window || {};
 };
 MW.Window.prototype = {
 
@@ -555,15 +556,6 @@ MW.Window.prototype = {
     this._location.host        = this._cleanString(location.hostname);
 
     this._cachedSearchHash = null;
-  },
-
-  /**
-   * Set document implementation (i.e. document).
-   *
-   * @param {Object} document
-   */
-  setDocument : function(document) {
-    this._document = document || {};
   },
 
   /**
@@ -672,6 +664,15 @@ MW.Window.prototype = {
   },
 
   /**
+   * Wrapper for document.write method.
+   *
+   * @param {String} content
+   */
+  documentWrite : function(content) {
+    this._document.write(content);
+  },
+
+  /**
    * Simple dom element selector faking rudimentary jQuery like functionality
    * normalizing the result to alwys be an array/iterable.
    *
@@ -689,6 +690,46 @@ MW.Window.prototype = {
       return this._document.getElementsByClassName(selector.slice(1));
     }
     return this._document.getElementsByTagName(selector);
+  },
+
+  /**
+   * Wrapper to browser independently register a handler for the on DOM ready event.
+   *
+   * @param {Function} callback
+   */
+  onDomReady : function(callback) {
+    // Make sure callback is only called once
+    var eventHandled = false;
+    var eventHandler = function() {
+      if (!eventHandled) {
+        callback();
+        eventHandled = true;
+      }
+    };
+
+    // Internet Explorer
+    /*@cc_on
+    @if (@_win32 || @_win64)
+      this._document.write('<script id="ieScriptLoad" defer src="//:"><\/script>');
+      this._document.getElementById('ieScriptLoad').onreadystatechange = function() {
+        if (this.readyState == 'complete') {
+          eventHandler();
+        }
+      };
+    @end @*/
+
+    if (this._document.addEventListener) { // Mozilla, Chrome, Opera
+      this._document.addEventListener('DOMContentLoaded', eventHandler, false);
+    } else if (/KHTML|WebKit|iCab/i.test(this._window.navigator.userAgent)) { // Safari, iCab, Konqueror
+      var DOMLoadTimer = this._window.setInterval(function () {
+        if (/loaded|complete/i.test(this._document.readyState)) {
+          eventHandler();
+          this._window.clearInterval(DOMLoadTimer);
+        }
+      }, 10);
+    } else { // Other web browsers
+      this._window.onload = eventHandler;
+    }
   }
 };
 
