@@ -1,3 +1,6 @@
+/*jslint forin: true, nomen: true, plusplus: true, regexp: true, unparam: true, sloppy: true, todo: true, indent: 2, maxlen: 120 */
+/*global window */
+
 /**
  * @class mw-lib name space.
  * @author Joerg Basedow <jbasedow@mindworks.de>
@@ -30,9 +33,11 @@ MW.Util = {
    * @return {(String|false)}
    */
   getKeyForElementFromObject : function(anObject, anElement) {
-    var foundKey = false;
-    for (var aKey in anObject) {
-      if (anObject[aKey] == anElement) {
+    var foundKey = false,
+      aKey;
+
+    for (aKey in anObject) {
+      if (anObject[aKey] === anElement) {
         foundKey = aKey;
         break;
       }
@@ -52,11 +57,17 @@ MW.Util = {
 
   /**
    * Recursively merge properties of two objects
+   *
+   * @param {Object} obj1
+   * @param {Object} obj2
+   * @return {Object}
    */
   mergeRecursive : function(obj1, obj2) {
-    for (var p in obj2) {
+    var p;
+
+    for (p in obj2) {
       // Property in destination object set; update its value.
-      if (obj2[p].constructor == Object) {
+      if (obj2[p].constructor === Object) {
         if (!obj1[p]) {
           obj1[p] = {};
         }
@@ -85,15 +96,16 @@ MW.Util.isArray = Array.isArray || function(obj) {
  * @return {Array}
  */
 MW.Util.getKeysFromObject = Object.keys || function(anObject) {
-  var keys = [];
-  for (var aKey in anObject) {
+  var keys = [],
+    aKey;
+
+  for (aKey in anObject) {
     if (anObject.hasOwnProperty(aKey)) {
       keys.push(aKey);
     }
   }
   return keys;
 };
-
 
 /**
  * @class Convenience class to merge placeholders into a template string.
@@ -112,7 +124,7 @@ MW.Template.prototype = {
    * @return {String}
    */
   render : function(placeholders) {
-    var placeholders = placeholders || {};
+    placeholders = placeholders || {};
     return this._template.replace(
       /#\{([^{}]*)\}/gi,
       function(completeMatch, placeholderName) {
@@ -128,9 +140,8 @@ MW.Template.prototype = {
  * @return {Boolean}
  */
 MW.Template.isValidPlaceholder = function(placeholder) {
-  return typeof placeholder in {'string' : 1, 'number' : 1};
+  return ['string', 'number'].indexOf(typeof placeholder) !== -1;
 };
-
 /**
  * Make a placeholder an empty string, if it is not a string or a number.
  *
@@ -152,30 +163,32 @@ MW.Template.cleanPlaceholder = function(placeholder) {
 MW.ServiceContainer = function() {
   this._services = {};
   this._cache = {};
-}
+};
 MW.ServiceContainer.prototype = {
-    /**
-     * Add a service factory to the container.
-     *
-     * @param {String} serviceName
-     * @param {Function} factory
-     */
-    set : function(serviceName, factory) {
-        this._services[serviceName] = factory;
-    },
-    /**
-     * Add a service factory to the container.
-     *
-     * @param {String} serviceName
-     * @return {Mixed} Service with all its dependencies
-     */
-    get : function(serviceName) { // TODO: allow non singleton
-        if(!this._cache[serviceName]) {
-            this._cache[serviceName] = this._services[serviceName](this);
-        }
-        return this._cache[serviceName];
+  /**
+   * Add a service factory to the container.
+   *
+   * @param {String} serviceName
+   * @param {Function} factory
+   */
+  set : function(serviceName, factory) {
+    this._services[serviceName] = factory;
+  },
+  /**
+   * Add a service factory to the container.
+   *
+   * @todo allow non singleton
+   *
+   * @param {String} serviceName
+   * @return {Mixed} Service with all its dependencies
+   */
+  get : function(serviceName) {
+    if (!this._cache[serviceName]) {
+      this._cache[serviceName] = this._services[serviceName](this);
     }
-}
+    return this._cache[serviceName];
+  }
+};
 
 /**
  * @class Event dispatcher decoupling the event handlers from the objects where
@@ -187,7 +200,6 @@ MW.EventDispatcher = function() {
   this._eventHandlers = {};
 };
 MW.EventDispatcher.prototype = {
-
   /**
    * Register an event handler for an event name.
    *
@@ -197,10 +209,10 @@ MW.EventDispatcher.prototype = {
    *   executed first or last, when event is triggered.
    */
   on : function(eventName, eventHandler, executionTime) {
-    if (executionTime !== MW.EventDispatcher.ExecutionTimes.FIRST && executionTime !== MW.EventDispatcher.ExecutionTimes.LAST) {
+    if (!MW.Util.getKeyForElementFromObject(MW.EventDispatcher.ExecutionTimes, executionTime)) {
       executionTime = MW.EventDispatcher.ExecutionTimes.DEFAULT;
     }
-    if (!typeof eventHandler == 'function') {
+    if (typeof eventHandler !== 'function') {
       throw {
         name : 'InvalidArgumentException',
         message : '"' + eventHandler + '" is not a valid event handler.'
@@ -214,7 +226,6 @@ MW.EventDispatcher.prototype = {
     }
     this._eventHandlers[eventName][executionTime].push(eventHandler);
   },
-
   /**
    * Remove the event handlers for an event name.
    *
@@ -223,7 +234,6 @@ MW.EventDispatcher.prototype = {
   clear : function(eventName) {
     this._eventHandlers[eventName] = {};
   },
-
   /**
    * Trigger an event and notify the event handlers.
    *
@@ -232,12 +242,16 @@ MW.EventDispatcher.prototype = {
    * @param {mixed} info Additional event information
    */
   trigger : function(eventName, context, info) {
+    var flatList,
+      i,
+      length;
+
     if (this._eventHandlers[eventName]) {
-      var flatList = this._eventHandlers[eventName][MW.EventDispatcher.ExecutionTimes.FIRST] || [];
+      flatList = this._eventHandlers[eventName][MW.EventDispatcher.ExecutionTimes.FIRST] || [];
       flatList = flatList.concat(this._eventHandlers[eventName][MW.EventDispatcher.ExecutionTimes.DEFAULT] || []);
       flatList = flatList.concat(this._eventHandlers[eventName][MW.EventDispatcher.ExecutionTimes.LAST] || []);
-      for (var anIndex = 0; anIndex < flatList.length; anIndex++) {
-        flatList[anIndex](context, info);
+      for (i = 0, length = flatList.length; i < length; i++) {
+        flatList[i](context, info);
       }
     }
   }
@@ -258,8 +272,7 @@ MW.EventDispatcher.ExecutionTimes = {
  * @class Name space for loggers.
  * @author Joerg Basedow <jbasedow@mindworks.de>
  */
-MW.Logger = {}
-
+MW.Logger = {};
 /**
  * Log levels
  *
@@ -277,7 +290,6 @@ MW.Logger.Levels = {
   ALERT     : 70,
   EMERGENCY : 80
 };
-
 /**
  * Checks if the given level is allowed.
  *
@@ -287,7 +299,6 @@ MW.Logger.Levels = {
 MW.Logger.isValidLevel = function(level) {
   return Boolean(MW.Util.getKeyForElementFromObject(MW.Logger.Levels, level));
 };
-
 /**
  * Get log level for given string.
  *
@@ -296,16 +307,17 @@ MW.Logger.isValidLevel = function(level) {
  *
  */
 MW.Logger.getLogLevelForString = function(levelAsString) {
-  var levels = MW.Logger.Levels;
-  var lvl = levels.NOLOG;
-  for (var aLevelName in levels) {
-    if (levelAsString.toUpperCase() == aLevelName) {
+  var levels = MW.Logger.Levels,
+    lvl = levels.NOLOG,
+    aLevelName;
+
+  for (aLevelName in levels) {
+    if (levelAsString.toUpperCase() === aLevelName) {
       lvl = levels[aLevelName];
     }
   }
   return lvl;
 };
-
 /**
  * Get log level for given string.
  *
@@ -361,7 +373,7 @@ MW.Logger.Abstract.prototype.getLogLevelAsString = function() {
  * @return {Boolean}
  */
 MW.Logger.Abstract.prototype.isCausingLogEntry = function(level) {
-  return this._logLevel != MW.Logger.Levels.NOLOG &&
+  return this._logLevel !== MW.Logger.Levels.NOLOG &&
     MW.Logger.isValidLevel(level) &&
     level >= this._logLevel;
 };
@@ -411,9 +423,13 @@ MW.Logger.Array.prototype.toString = function() {
  * @return {Array.<String>} Array of log strings (Level: message).
  */
 MW.Logger.Array.prototype.getLogEntries = function() {
-  var log = [];
-  for (var anIndex = 0; anIndex < this._logEntries.length; anIndex++) {
-    var anEntry = this._logEntries[anIndex];
+  var log = [],
+    i,
+    length,
+    anEntry;
+
+  for (i = 0, length = this._logEntries.length; i < length; i++) {
+    anEntry = this._logEntries[i];
     log.push(anEntry.toString());
   }
   return log;
@@ -426,8 +442,11 @@ MW.Logger.Array.prototype.getLogEntries = function() {
  * @return {String}
  */
 MW.Logger.Array.prototype._stringify = function(entries) {
-  var logString = '';
-  for (var i = 0; i < entries.length; i++) {
+  var logString = '',
+    i,
+    length;
+
+  for (i = 0, length = entries.length; i < length; i++) {
     logString += entries[i].toString() + "\n";
   }
   return logString;
@@ -453,7 +472,7 @@ MW.Logger.Console.prototype.log = function(message, level) {
   if (!MW.Logger.isValidLevel(level)) {
     level = MW.Logger.Levels.INFO;
   }
-  if (this.isCausingLogEntry(level) && window.console && typeof window.console.log == 'function') {
+  if (this.isCausingLogEntry(level) && window.console && typeof window.console.log === 'function') {
     window.console.log('MW.Logger.Console: ' + MW.Logger.getStringForLogLevel(level) + ': ' + message);
   }
 };
@@ -475,7 +494,7 @@ MW.Logger.Composite.prototype = new MW.Logger.Abstract();
  * @param {MW.Logger.Abstract} logger
  */
 MW.Logger.Composite.prototype.addLogger = function(logger) {
-  if (typeof logger.log == 'function') {
+  if (typeof logger.log === 'function') {
     this._loggers.push(logger);
   }
 };
@@ -486,7 +505,10 @@ MW.Logger.Composite.prototype.addLogger = function(logger) {
  * @param {Integer} level
  */
 MW.Logger.Composite.prototype.log = function(message, level) {
-  for (var i = 0; i < this._loggers.length; i++) {
+  var i,
+    length;
+
+  for (i = 0, length = this._loggers.length; i < length; i++) {
     this._loggers[i].log(message, level);
   }
 };
@@ -506,7 +528,6 @@ MW.LogEntry = function(message, level) {
   this._level = level;
 };
 MW.LogEntry.prototype = {
-
   /**
    * Get string representation of Log Entry
    *
@@ -516,7 +537,6 @@ MW.LogEntry.prototype = {
   toString : function() {
     return MW.Logger.getStringForLogLevel(this._level) + ': ' + this._message;
   },
-
   /**
    * Get log level of entry.
    *
@@ -540,7 +560,6 @@ MW.Window = function(window) {
   this._window = window || {};
 };
 MW.Window.prototype = {
-
   /**
    * Set location implementation (i.e. window.location). Copys of the sub
    * properties are stored to clone the original so we do not accidental tamper
@@ -557,7 +576,6 @@ MW.Window.prototype = {
 
     this._cachedSearchHash = null;
   },
-
   /**
    * Get the path of the page url.
    *
@@ -566,7 +584,6 @@ MW.Window.prototype = {
   getPath : function() {
     return this._location.path;
   },
-
   /**
    * get the host of the page url.
    *
@@ -575,26 +592,30 @@ MW.Window.prototype = {
   getHost : function() {
     return this._location.host;
   },
-
   /**
    * Split the query string to a hash containing name => value pairs.
    *
    * @private
    */
   _splitQueryString : function() {
+    var i,
+      length,
+      queryString,
+      parameters,
+      pair;
+
     if (this._cachedSearchHash === null) {
       this._cachedSearchHash = {};
       if (MW.Window.isValidQuerySting(this._location.queryString)) {
-        var queryString = this._location.queryString.substring(1);
-        var parameters = queryString.split('&');
-        for (var anIndex = 0; anIndex < parameters.length; anIndex++) {
-          var pair = parameters[anIndex].split('=');
+        queryString = this._location.queryString.substring(1);
+        parameters = queryString.split('&');
+        for (i = 0, length = parameters.length; i < length; i++) {
+          pair = parameters[i].split('=');
           this._cachedSearchHash[pair[0]] = pair[1];
         }
       }
     }
   },
-
   /**
    * Convert value to empty string, if no string given.
    *
@@ -605,7 +626,6 @@ MW.Window.prototype = {
   _cleanString : function(value) {
     return typeof value === 'string' ? value : '';
   },
-
   /**
    * Get cookie with given name.
    *
@@ -613,25 +633,26 @@ MW.Window.prototype = {
    * @return {String} the cookie value
    */
   getCookie : function(cookieName) {
-    var cookieValue = "";
-    if (cookieName !== "")
-    {
-      var cookie = "" + this._document.cookie;
-      var indexBegin = cookie.indexOf(cookieName);
-      if (indexBegin != -1)
-      {
-        var indexEnd = cookie.indexOf(';', indexBegin);
-        if (indexEnd == -1)
-        {
+    var cookieValue = '',
+      cookie,
+      indexBegin,
+      indexEnd;
+
+    if (cookieName !== '') {
+      cookie = String(this._document.cookie);
+      indexBegin = cookie.indexOf(cookieName);
+      if (indexBegin !== -1) {
+        indexEnd = cookie.indexOf(';', indexBegin);
+        if (indexEnd === -1) {
           indexEnd = cookie.length;
         }
-        cookieValue = unescape(
-          cookie.substring(indexBegin + cookieName.length + 1, indexEnd));
+        cookieValue = window.unescape(
+          cookie.substring(indexBegin + cookieName.length + 1, indexEnd)
+        );
       }
     }
     return cookieValue;
   },
-
   /**
    * Set given value for cookie with given name.
    *
@@ -641,7 +662,6 @@ MW.Window.prototype = {
   setCookie : function(cookieName, cookieValue) {
     this._document.cookie = cookieName + '=' + cookieValue;
   },
-
   /**
    * Delete cookie with given name.
    *
@@ -650,7 +670,6 @@ MW.Window.prototype = {
   deleteCookie : function(cookieName) {
     this._document.cookie = cookieName + "=; expires= Thu, 01-Jan-1970 00:00:01 GMT;";
   },
-
   /**
    * Get the value corresponding the given "name" or undefined if parameter is
    * not set.
@@ -662,7 +681,6 @@ MW.Window.prototype = {
     this._splitQueryString();
     return this._cachedSearchHash[parameterName];
   },
-
   /**
    * Wrapper for document.write method.
    *
@@ -671,7 +689,6 @@ MW.Window.prototype = {
   documentWrite : function(content) {
     this._document.write(content);
   },
-
   /**
    * Simple dom element selector faking rudimentary jQuery like functionality
    * normalizing the result to alwys be an array/iterable.
@@ -680,18 +697,17 @@ MW.Window.prototype = {
    * @return {Array.<DomElement>}
    */
   $ : function(selector) {
-    if (typeof selector != 'string') {
+    if (typeof selector !== 'string') {
       return [];
     }
-    if (selector[0] == '#') {
+    if (selector[0] === '#') {
       return [this._document.getElementById(selector.slice(1))];
     }
-    if (selector[0] == '.') {
+    if (selector[0] === '.') {
       return this._document.getElementsByClassName(selector.slice(1));
     }
     return this._document.getElementsByTagName(selector);
   },
-
   /**
    * Wrapper to browser independently register a handler for the on DOM ready event.
    *
@@ -699,20 +715,21 @@ MW.Window.prototype = {
    */
   onDomReady : function(callback) {
     // Make sure callback is only called once
-    var eventHandled = false;
-    var eventHandler = function() {
-      if (!eventHandled) {
-        callback();
-        eventHandled = true;
-      }
-    };
+    var eventHandled = false,
+      eventHandler = function() {
+        if (!eventHandled) {
+          callback();
+          eventHandled = true;
+        }
+      },
+      DOMLoadTimer;
 
     // Internet Explorer
     /*@cc_on
     @if (@_win32 || @_win64)
       this._document.write('<script id="ieScriptLoad" defer src="//:"><\/script>');
       this._document.getElementById('ieScriptLoad').onreadystatechange = function() {
-        if (this.readyState == 'complete') {
+        if (this.readyState === 'complete') {
           eventHandler();
         }
       };
@@ -721,7 +738,7 @@ MW.Window.prototype = {
     if (this._document.addEventListener) { // Mozilla, Chrome, Opera
       this._document.addEventListener('DOMContentLoaded', eventHandler, false);
     } else if (/KHTML|WebKit|iCab/i.test(this._window.navigator.userAgent)) { // Safari, iCab, Konqueror
-      var DOMLoadTimer = this._window.setInterval(function () {
+      DOMLoadTimer = this._window.setInterval(function () {
         if (/loaded|complete/i.test(this._document.readyState)) {
           eventHandler();
           this._window.clearInterval(DOMLoadTimer);
@@ -732,7 +749,6 @@ MW.Window.prototype = {
     }
   }
 };
-
 /**
  * Check if given query string has proper format (i.e. ?x=y&z=1).
  *
