@@ -23,7 +23,6 @@ MW.Util = {
     length = length || 9;
     return String(Math.random()).substring(2, 2 + length);
   },
-
   /**
    * Gets the first key for an element from an object if contained, false
    * otherwise.
@@ -44,7 +43,6 @@ MW.Util = {
     }
     return foundKey;
   },
-
   /**
    * Remove all Linebreaks (\n, \r\n, \r) from the given string.
    *
@@ -54,7 +52,6 @@ MW.Util = {
   removeLineBreaks : function(string) {
     return string.replace(/(\r|\n)/g, '');
   },
-
   /**
    * Recursively merge properties of two objects
    *
@@ -242,18 +239,31 @@ MW.EventDispatcher.prototype = {
    * @param {mixed} info Additional event information
    */
   trigger : function(eventName, context, info) {
-    var flatList,
+    var flatList = this._getMergedList(eventName),
       i,
       length;
 
-    if (this._eventHandlers[eventName]) {
-      flatList = this._eventHandlers[eventName][MW.EventDispatcher.ExecutionTimes.FIRST] || [];
-      flatList = flatList.concat(this._eventHandlers[eventName][MW.EventDispatcher.ExecutionTimes.DEFAULT] || []);
-      flatList = flatList.concat(this._eventHandlers[eventName][MW.EventDispatcher.ExecutionTimes.LAST] || []);
-      for (i = 0, length = flatList.length; i < length; i++) {
-        flatList[i](context, info);
-      }
+    for (i = 0, length = flatList.length; i < length; i++) {
+      flatList[i](context, info);
     }
+  },
+  /**
+   * Merge eventhandler registerd to the different execution times for given eventName to a flat list.
+   *
+   * @param {String} eventName
+   * @return {Array}
+   */
+  _getMergedList : function(eventName) {
+    var flatList = [],
+      key,
+      executionTime;
+
+    for (key in MW.EventDispatcher.ExecutionTimes) {
+      executionTime = MW.EventDispatcher.ExecutionTimes[key];
+      flatList = flatList.concat(this._eventHandlers[eventName][executionTime] || []);
+    }
+
+    return flatList;
   }
 };
 /**
