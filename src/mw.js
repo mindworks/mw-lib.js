@@ -80,11 +80,48 @@ MW.Util = {
 /**
  * Checks if given argument is an array. Aliases native method if available.
  *
- * @param {Object.<String, mixed>} anObject
- * @return {Array}
+ * @param {mixed} obj
+ * @return {Boolean}
  */
 MW.Util.isArray = Array.isArray || function(obj) {
   return Object.prototype.toString.call(obj) === '[object Array]';
+};
+/**
+ * Checks if given haystack contains needle.
+ *
+ * @param {Array} haystack
+ * @param {mixed} needle
+ * @return {Boolean}
+ */
+MW.Util.inArray = function(haystack, needle) {
+  if (!MW.Util.isArray(haystack)) {
+    throw {
+      name : 'InvalidArgumentException',
+      message : '"' + haystack + '" is not an array.'
+    };
+  }
+
+  if (!('indexOf' in Array.prototype)) {
+    Array.prototype.indexOf = function(find, i /*opt*/) {
+      if (i === undefined) {
+        i = 0;
+      }
+      if (i < 0) {
+        i += this.length;
+      }
+      if (i < 0) {
+        i = 0;
+      }
+      for (var n = this.length; i < n; i++) {
+        if (i in this && this[i] === find) {
+          return i;
+        }
+      }
+      return -1;
+    };
+  }
+
+  return haystack.indexOf(needle) !== -1;
 };
 /**
  * Gets all keys from an object. Aliases native method if available.
@@ -137,7 +174,7 @@ MW.Template.prototype = {
  * @return {Boolean}
  */
 MW.Template.isValidPlaceholder = function(placeholder) {
-  return ['string', 'number'].indexOf(typeof placeholder) !== -1;
+  return MW.Util.inArray(['string', 'number'], typeof placeholder);
 };
 /**
  * Make a placeholder an empty string, if it is not a string or a number.
@@ -464,6 +501,7 @@ MW.Logger.Array.prototype._stringify = function(entries) {
 
 /**
  * @class Logging service implementation that stores log entries in a member array.
+ * @todo Inject window.console
  * @author Joerg Basedow <jbasedow@mindworks.de>
  * @constructor
  * @param {Integer} logLevel

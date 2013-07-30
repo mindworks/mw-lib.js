@@ -57,6 +57,26 @@ test('testIsArray', function() {
   ok(!MW.Util.isArray(666));
 });
 
+test('testInArray', function() {
+  ok(!MW.Util.inArray([], 'void'), 'Empty array contains nothing.');
+
+  ok(MW.Util.inArray(['stuff'], 'stuff'), 'Hit works for strings.');
+  ok(!MW.Util.inArray(['some_stuff'], 'other_stuff'), 'Miss works for strings.');
+
+  ok(MW.Util.inArray([666], 666), 'Hit works for numbers.');
+  ok(!MW.Util.inArray([123], 456), 'Miss works for numbers.');
+
+  var obj = {};
+  ok(MW.Util.inArray([obj], obj), 'Hit works for objects.');
+  ok(!MW.Util.inArray([obj], {}), 'Miss works for objects.');
+
+  try {
+      MW.Util.inArray('noArray', 'void');
+  } catch (e) {
+      equal(e.name, 'InvalidArgumentException', 'Invalid agrument detection works.');
+  }
+});
+
 test('testGetKeysFromObject', function() {
   deepEqual(MW.Util.getKeysFromObject({}), []);
   deepEqual(MW.Util.getKeysFromObject({ aKey : 'anElement' }), ['aKey']);
